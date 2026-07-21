@@ -4,7 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f5ef" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Daylight English" />
     <title>Daylight English | 基础英语学习</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/daylight-icon.svg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body data-theme="minimal">
@@ -37,7 +42,7 @@
       <main class="main-content">
         <header class="topbar">
           <div class="mobile-brand"><span class="brand-mark">D</span><strong>Daylight</strong></div>
-          <div class="topbar-actions"><button class="icon-button" title="通知" aria-label="通知">♧</button><button class="avatar small" id="topAvatar" aria-label="打开个人资料">L</button></div>
+          <div class="topbar-actions"><button class="install-button" id="installApp" type="button">安装应用</button><button class="icon-button" title="通知" aria-label="通知">♧</button><button class="avatar small" id="topAvatar" aria-label="打开个人资料">L</button></div>
         </header>
 
         <div class="page-wrap" id="app">
