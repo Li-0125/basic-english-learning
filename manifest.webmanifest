@@ -1,0 +1,17 @@
+{
+  "name": "Daylight English - 基础英语学习",
+  "short_name": "Daylight English",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f5ef",
+  "theme_color": "#f7f5ef",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "icons/daylight-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
