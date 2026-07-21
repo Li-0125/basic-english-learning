@@ -37,6 +37,7 @@ button { border: 0; font: inherit; cursor: pointer; }
 .main-content { flex: 1; min-width: 0; }
 .topbar { display: flex; justify-content: flex-end; align-items: center; height: 76px; padding: 0 5.5%; }
 .topbar-actions { display: flex; align-items: center; gap: 18px; }
+.install-button { padding: 7px 10px; border: 1px solid #c9d9d5; border-radius: 5px; color: var(--navy); background: #f9fcfb; font-size: 11px; white-space: nowrap; }.install-button:hover { background: #edf5f0; }
 .icon-button { background: transparent; color: var(--muted); font-size: 20px; }
 .avatar.small { width: 32px; height: 32px; }
 .mobile-brand { display: none; }
