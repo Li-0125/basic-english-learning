@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f5ef" />
+    <title>Daylight English | 基础英语学习</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-theme="minimal">
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <span class="brand-mark">D</span>
+          <div>
+            <strong>Daylight</strong>
+            <span>基础英语</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="home"><span class="nav-icon">⌂</span>首页</button>
+          <button class="nav-item" data-view="courses"><span class="nav-icon">▤</span>背单词</button>
+          <button class="nav-item" data-view="plan"><span class="nav-icon">◷</span>每日计划</button>
+          <button class="nav-item" data-view="wordbook"><span class="nav-icon">Aa</span>词库</button>
+          <button class="nav-item" data-view="speaking"><span class="nav-icon">◉</span>口语</button>
+          <button class="nav-item" data-view="review"><span class="nav-icon">↻</span>复习</button>
+          <button class="nav-item" data-view="progress"><span class="nav-icon">◒</span>学习记录</button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="streak-mini"><span>✦</span><div><strong id="sidebarStreak">3</strong><small>天连续学习</small></div></div>
+          <button class="profile-button" id="profileButton"><span class="avatar" id="sidebarAvatar">L</span><span id="sidebarName">学习者</span><span class="more">···</span></button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="brand-mark">D</span><strong>Daylight</strong></div>
+          <div class="topbar-actions"><button class="icon-button" title="通知" aria-label="通知">♧</button><button class="avatar small" id="topAvatar" aria-label="打开个人资料">L</button></div>
+        </header>
+
+        <div class="page-wrap" id="app">
+          <section class="view active" id="home-view">
+            <div class="welcome-row">
+              <div>
+                <p class="eyebrow">TUESDAY · JULY 21</p>
+                <h1>早上好，学习者。</h1>
+                <p class="subheading">今天也用一点时间，让英语更靠近你。</p>
+              </div>
+              <div class="day-progress"><span>今日进度</span><strong id="progressText">0 / 4</strong><div class="progress-track"><i id="progressBar"></i></div></div>
+            </div>
+
+            <button class="plan-strip" data-view="plan">
+              <span class="plan-strip-icon">◷</span>
+              <span><strong>今日计划：<b id="planSummary">15 分钟 · 10 个词 · 口语练习</b></strong><small>根据自己的时间和目标调整学习量</small></span>
+              <span class="plan-strip-arrow">→</span>
+            </button>
+
+            <div class="hero-task">
+              <div class="hero-copy">
+                <div class="task-label"><span class="status-dot"></span>今日学习</div>
+                <h2>今天，先记住这些单词</h2>
+                <p id="heroWordCopy">每个单词会在分组练习中随机出现三次，答对才会计入掌握。</p>
+                <button class="primary-button" id="startLesson"><span>▶</span>开始背今日单词</button>
+              </div>
+              <div class="hero-illustration" aria-hidden="true"><span class="sun">☼</span><span class="book">▱</span><span class="spark spark-a">✦</span><span class="spark spark-b">·</span></div>
+            </div>
+
+            <div class="section-heading"><div><p class="eyebrow">YOUR ROUTINE</p><h2>今日安排</h2></div><button class="text-button" data-view="courses">去背单词 <span>→</span></button></div>
+            <div class="task-grid" id="taskGrid">
+              <article class="task-card" data-task="vocabulary"><div class="task-card-top"><span class="task-symbol coral">Aa</span><span class="task-state">待完成</span></div><h3>核心词汇</h3><p>5 个新单词 · 约 4 分钟</p><button class="card-action">开始学习 <span>→</span></button></article>
+              <article class="task-card" data-task="sentence"><div class="task-card-top"><span class="task-symbol blue">文</span><span class="task-state">待完成</span></div><h3>今日句型</h3><p>介绍自己 · 约 3 分钟</p><button class="card-action">开始学习 <span>→</span></button></article>
+              <article class="task-card" data-task="listening"><div class="task-card-top"><span class="task-symbol green">◖</span><span class="task-state">待完成</span></div><h3>听力练习</h3><p>短句听辨 · 约 5 分钟</p><button class="card-action">开始学习 <span>→</span></button></article>
+              <article class="task-card review-card" data-task="review"><div class="task-card-top"><span class="task-symbol violet">↻</span><span class="task-state">3 项到期</span></div><h3>快速复习</h3><p>巩固最近学过的内容</p><button class="card-action">去复习 <span>→</span></button></article>
+            </div>
+
+            <div class="lower-grid">
+              <section class="panel course-panel"><div class="panel-heading"><div><p class="eyebrow">CURRENT COURSE</p><h2>基础表达 · 第 1 单元</h2></div><span class="course-count">1 / 6</span></div><div class="course-progress"><div><span>单元进度</span><strong>17%</strong></div><div class="progress-track"><i style="width:17%"></i></div></div><div class="lesson-row"><span class="lesson-number current">01</span><div><strong>认识自己</strong><span>5 个词汇 · 1 个句型</span></div><span class="lesson-status">进行中</span></div><div class="lesson-row locked"><span class="lesson-number">02</span><div><strong>认识朋友</strong><span>完成上一课后解锁</span></div><span>○</span></div></section>
+              <section class="panel streak-panel"><p class="eyebrow">YOUR MOMENTUM</p><h2>保持节奏</h2><div class="streak-number"><strong id="streakNumber">3</strong><span>天</span></div><div class="week-dots"><span class="done">一</span><span class="done">二</span><span class="done">三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><p class="panel-note">再学习 4 天，完成本周目标。</p></section>
+            </div>
+          </section>
+
+          <section class="view" id="courses-view"><div class="view-heading"><p class="eyebrow">WORD MEMORY</p><h1>记单词</h1><p>这是你的核心学习入口。按每日计划分组背词，再通过复习把记忆留下来。</p></div><section class="word-course-hero"><div><p class="eyebrow">TODAY'S VOCABULARY</p><h2 id="wordCourseTitle">今日新词</h2><p id="wordCourseDescription">每 10 个词为一组，组内随机出现；每个词累计答对三次才算掌握。</p><button class="primary-button" id="startWordCourse"><span>▶</span>开始背词</button></div><div class="word-course-metrics"><div><strong id="wordCourseGoal">10</strong><span>个新词</span></div><div><strong id="wordCourseGroups">1</strong><span>个学习组</span></div><div><strong>3</strong><span>次正确</span></div></div></section><div class="memory-steps"><article><span>01</span><div><strong>新词分组</strong><p>每组最多 10 个词，降低短时记忆负担。</p></div></article><article><span>02</span><div><strong>乱序回忆</strong><p>同组词会分散出现，避免连续重复造成假熟练。</p></div></article><article><span>03</span><div><strong>次日复习</strong><p>新词在第二天自动进入复习队列。</p></div></article></div></section>
+
+          <section class="view" id="study-view">
+            <div class="study-topbar"><button class="text-button" id="exitStudy">← 退出学习</button><div class="study-progress"><span id="studyProgressLabel">今日新词</span><div class="progress-track"><i id="studyProgressBar"></i></div><strong id="studyProgressText">0 / 0</strong></div><button class="study-mode-button" id="studyModeButton">英文选中文</button></div>
+            <div class="study-layout"><section class="word-study-card"><p class="eyebrow">NEW WORD</p><h1 id="studyWord">hello</h1><div class="study-phonetic" id="studyPhoneticBlock"><span id="studyPhonetic">[həˈləʊ]</span><button class="entry-play study-play" id="studyPlay" aria-label="播放美式发音">▶</button></div><p class="study-meaning" id="studyMeaning">int. 你好</p><div class="example-block" id="studyExampleBlock"><span>EXAMPLE</span><strong id="studyExample">Hello, my name is Lily.</strong><small id="studyExampleTranslation">你好，我叫 Lily。</small></div><p class="repeat-hint">本词还需要答对 <strong id="studyRepeatCount">3</strong> 次，才会进入今天的已掌握词汇。</p></section><section class="quiz-card"><p class="eyebrow">CHOOSE THE CORRECT ANSWER</p><h2 id="quizPrompt">“hello” 的意思是？</h2><div class="quiz-options" id="quizOptions"></div><p class="quiz-feedback" id="quizFeedback" aria-live="polite">选择一个答案开始练习。</p></section></div>
+          </section>
+
+          <section class="view" id="plan-view">
+            <div class="view-heading"><p class="eyebrow">YOUR DAILY RHYTHM</p><h1>每日计划</h1><p>按你的时间安排学习量，计划会自动保存到当前浏览器。</p></div>
+            <div class="plan-layout">
+              <section class="plan-card"><div class="plan-card-heading"><div><p class="eyebrow">STUDY TIME</p><h2>每天学习多久？</h2></div><output id="minutesOutput">30 分钟</output></div><input id="minutesInput" class="range-input" type="range" min="0.5" max="12" value="0.5" step="0.5" aria-label="每日学习时长" /><div class="range-labels"><span>30 分钟</span><span>12 小时</span></div></section>
+              <section class="plan-card"><div class="plan-card-heading"><div><p class="eyebrow">NEW WORDS</p><h2>每天学习多少新词？</h2></div><output id="wordGoalOutput">10 个</output></div><div class="stepper"><button class="stepper-button" data-step="-10" aria-label="减少单词数量">−</button><strong id="wordGoalValue">10</strong><button class="stepper-button" data-step="10" aria-label="增加单词数量">+</button></div><small class="plan-limit">单日上限 300 个；建议从 10～30 个开始。</small></section>
+              <section class="plan-card plan-switches"><p class="eyebrow">INCLUDE IN YOUR PLAN</p><label class="switch-row"><span><strong>口语跟读</strong><small>练习一条真实的基础表达</small></span><input id="speakingToggle" type="checkbox" checked /><i></i></label><label class="switch-row"><span><strong>到期复习</strong><small>优先巩固容易遗忘的内容</small></span><input id="reviewToggle" type="checkbox" checked /><i></i></label></section>
+            </div>
+            <div class="plan-preview"><div><p class="eyebrow">TODAY'S PREVIEW</p><h2 id="planPreviewTitle">15 分钟学习计划</h2><p id="planPreviewText">10 个新词、一个基础句型、一次短句跟读和到期复习。</p></div><button class="primary-button" id="savePlan">保存计划</button></div>
+          </section>
+
+          <section class="view" id="wordbook-view">
+            <div class="view-heading wordbook-heading"><div><p class="eyebrow">VOCABULARY LIBRARY</p><h1>词库</h1><p>高考核心词汇与日常高频词汇放在一起学习。</p></div><div class="library-count"><strong id="libraryCount">正在加载</strong><span>个可学习词条</span></div></div>
+            <div class="wordbook-toolbar"><label class="search-field"><span>⌕</span><input id="wordSearch" type="search" placeholder="搜索英文单词或中文释义" autocomplete="off" /></label><div class="filter-set"><button class="filter-button active" data-filter="all">全部</button><button class="filter-button" data-filter="daily">日常高频</button><button class="filter-button" data-filter="gaokao">高考词汇</button></div></div>
+            <p class="wordbook-status" id="wordbookStatus">正在准备词库...</p>
+            <div class="word-list" id="wordList" aria-live="polite"></div>
+            <button class="load-more" id="loadMoreWords">加载更多</button>
+          </section>
+
+          <section class="view" id="speaking-view">
+            <div class="view-heading"><p class="eyebrow">SPEAK WITH CONFIDENCE</p><h1>口语练习</h1><p>先听，再跟读。系统会根据识别到的内容给出即时反馈。</p></div>
+            <div class="speaking-tabs" role="tablist"><button class="speaking-tab active" data-speaking-mode="word" role="tab" aria-selected="true">单词跟读</button><button class="speaking-tab" data-speaking-mode="sentence" role="tab" aria-selected="false">句子跟读</button></div>
+            <div class="speaking-layout">
+              <section class="speaking-card target-card"><p class="eyebrow" id="speakingTargetLabel">TODAY'S WORD</p><div class="sentence-label" id="speakingLevel">日常高频</div><h2 id="targetSentence">hello</h2><p id="targetTranslation">你好</p><div class="speaking-actions"><button class="outline-button" id="playSentence"><span>▶</span>听美式发音</button><button class="outline-button" id="changeSentence"><span>↻</span>换一个</button></div></section>
+              <section class="speaking-card record-card"><p class="eyebrow">YOUR VOICE</p><div class="record-ring" id="recordRing"><span id="recordIcon">●</span></div><h2 id="recordTitle">准备好了吗？</h2><p id="recordHelp">点击下方按钮后，浏览器会请求麦克风权限。</p><button class="primary-button record-button" id="recordButton"><span>●</span>开始录音</button><audio class="recording-audio" id="recordingAudio" controls hidden></audio><div class="score-box" id="recognitionResult"><span class="score-label">智能跟读评分</span><strong>等待录音与识别</strong><small>当前为浏览器即时匹配分</small></div></section>
+            </div>
+            <section class="follow-card"><div><p class="eyebrow">SMART SHADOWING</p><h2>开始 AI 跟读分析</h2><p>朗读目标内容后，分数会显示在录音区旁边。</p></div><button class="primary-button" id="followButton"><span>◉</span>开始跟读识别</button></section>
+            <p class="speaking-note">说明：当前版本使用浏览器语音识别给出即时匹配分。正式的 AI 发音评分需要接入独立的语音评测服务，才能分析音素、重音、语调和流利度。</p>
+          </section>
+
+          <section class="view" id="review-view"><div class="view-heading"><p class="eyebrow">SPACED REVIEW</p><h1>复习</h1><p id="reviewIntro">把今天需要巩固的内容，分成小块完成。</p></div><div class="review-summary"><div><span class="summary-icon">↻</span><strong id="reviewCount">0</strong><p>项内容到期</p></div><div><span class="summary-icon green">✓</span><strong id="reviewAccuracy">--</strong><p>最近正确率</p></div><div><span class="summary-icon coral">1</span><strong id="reviewInterval">1 天</strong><p>下一次间隔</p></div></div><div class="review-list" id="reviewList"></div><button class="primary-button review-start" id="reviewButton">开始复习 <span>→</span></button></section>
+
+          <section class="view" id="progress-view"><div class="view-heading"><p class="eyebrow">YOUR PROGRESS</p><h1>学习记录</h1><p>完成每日计划后自动打卡，记录会随着你的学习实时更新。</p></div><div class="stats-grid"><div class="stat-card"><span>连续学习</span><strong id="statStreak">0</strong><small>天</small></div><div class="stat-card"><span>已学词汇</span><strong id="statWords">0</strong><small>个</small></div><div class="stat-card"><span>完成课程</span><strong id="statLessons">0</strong><small>节</small></div></div><div class="record-layout"><section class="panel calendar-panel"><div class="panel-heading"><div><p class="eyebrow">CHECK-IN CALENDAR</p><h2 id="calendarTitle">本月打卡</h2></div><span class="course-count" id="calendarSummary">0 天</span></div><div class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="calendar-grid" id="calendarGrid"></div></section><section class="panel progress-panel"><div class="panel-heading"><div><p class="eyebrow">THIS WEEK</p><h2>本周学习活动</h2></div><span class="course-count" id="weekSummary">0 / 7 天</span></div><div class="activity-bars" id="activityBars"></div><p class="panel-note" id="recordNote">完成今日计划后，这里会出现你的第一枚打卡。</p></section></div></section>
+        </div>
+      </main>
+    </div>
+    <nav class="mobile-nav" aria-label="移动端导航">
+      <button class="mobile-nav-item active" data-view="home"><span>⌂</span>首页</button>
+      <button class="mobile-nav-item" data-view="courses"><span>▤</span>背词</button>
+      <button class="mobile-nav-item" data-view="plan"><span>◷</span>计划</button>
+      <button class="mobile-nav-item" data-view="wordbook"><span>Aa</span>词库</button>
+      <button class="mobile-nav-item" data-view="speaking"><span>◉</span>口语</button>
+    </nav>
+    <dialog class="account-dialog" id="accountDialog">
+      <form method="dialog" class="account-sheet" id="accountForm">
+        <div class="account-header"><div><p class="eyebrow">YOUR ACCOUNT</p><h2>账户与界面</h2></div><button class="icon-button" value="cancel" aria-label="关闭">×</button></div>
+        <div class="account-tabs"><button type="button" class="account-tab active" data-account-tab="profile">资料</button><button type="button" class="account-tab" data-account-tab="login">登录</button><button type="button" class="account-tab" data-account-tab="theme">主题</button></div>
+        <section class="account-panel active" data-account-panel="profile"><label class="avatar-upload" for="avatarInput"><span class="avatar large" id="dialogAvatar">L</span><span>更换头像</span><input id="avatarInput" type="file" accept="image/*" hidden /></label><label class="form-field">学习 ID<input id="displayNameInput" maxlength="18" placeholder="输入你的学习 ID" /></label><label class="form-field">学习阶段<select id="profileLevel"><option value="beginner">零基础初学者</option><option value="highschool">高中生 · 高考词汇</option></select></label><button type="button" class="primary-button" id="saveProfile">保存资料</button></section>
+        <section class="account-panel" data-account-panel="login"><p class="login-copy">使用手机号或邮箱创建学习账户。当前为本地演示账户，正式版接入后可同步学习记录。</p><label class="form-field">手机号或邮箱<input id="loginIdentifier" placeholder="例如 13800000000 或 name@example.com" /></label><p class="form-label">你现在的英语水平</p><div class="level-options"><button type="button" class="level-option active" data-level-choice="beginner"><strong>零基础初学者</strong><small>从日常高频词和简单句子开始</small></button><button type="button" class="level-option" data-level-choice="highschool"><strong>高中生</strong><small>使用高考 3500 词与高中表达</small></button></div><button type="button" class="primary-button" id="localLogin">创建 / 登录本地账户</button><div class="login-divider"><span>或</span></div><div class="third-party-buttons"><button type="button" class="third-party-button" data-provider="微信">微信登录</button><button type="button" class="third-party-button" data-provider="QQ">QQ 登录</button></div><p class="account-hint">微信、QQ、短信验证码需要服务端配置应用凭证后才能启用真实登录。</p></section>
+        <section class="account-panel" data-account-panel="theme"><p class="login-copy">选择适合自己长期学习的界面风格。</p><div class="theme-options"><button type="button" class="theme-option" data-theme-choice="minimal"><span class="theme-swatch minimal-swatch"></span><strong>简约蓝绿</strong><small>清爽、专注</small></button><button type="button" class="theme-option" data-theme-choice="pink"><span class="theme-swatch pink-swatch"></span><strong>粉蓝配色</strong><small>轻松、柔和</small></button><button type="button" class="theme-option" data-theme-choice="mono"><span class="theme-swatch mono-swatch"></span><strong>黑白配色</strong><small>高对比、克制</small></button></div></section>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
