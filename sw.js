@@ -1,5 +1,5 @@
-const CACHE_NAME = "daylight-english-v2";
-const APP_SHELL = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "data/gaokao-3500.json", "icons/daylight-icon.svg"];
+const CACHE_NAME = "daylight-english-v3";
+const APP_SHELL = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "data/gaokao-3500.json", "icons/daylight-icon.svg", "icons/daylight-icon-192.png", "icons/daylight-icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
