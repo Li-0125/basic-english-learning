@@ -59,6 +59,7 @@ let activeSession = null;
 let mediaRecorder = null;
 let mediaStream = null;
 let recordingChunks = [];
+let installPrompt = null;
 
 function loadState() {
   try {
@@ -397,13 +398,54 @@ async function loadWordbook() {
   renderWords();
 }
 
+function englishVoice() {
+  const voices = window.speechSynthesis?.getVoices?.() || [];
+  return voices.find((voice) => /^en-US$/i.test(voice.lang)) || voices.find((voice) => /^en/i.test(voice.lang));
+}
+
 function speak(text) {
-  if (!("speechSynthesis" in window)) return showToast("当前浏览器不支持语音播放。" );
-  window.speechSynthesis.cancel();
+  if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return showToast("当前浏览器不支持语音播放。请使用 Chrome、Safari 或 Edge 打开应用。");
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
+  const voice = englishVoice();
+  utterance.lang = voice?.lang || "en-US";
+  utterance.voice = voice || null;
   utterance.rate = 0.82;
+  utterance.onerror = () => showToast("发音没有成功播放。请检查手机媒体音量，并再次点击播放。");
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.resume();
   window.speechSynthesis.speak(utterance);
+  window.setTimeout(() => {
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+  }, 120);
+}
+
+function setupInstall() {
+  const button = document.querySelector("#installApp");
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    button.hidden = false;
+  });
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    button.hidden = true;
+    showToast("应用已安装到手机桌面。");
+  });
+  button.addEventListener("click", async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+      button.hidden = true;
+      return;
+    }
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    showToast(isIos ? "请在 Safari 中点“分享”，再选择“添加到主屏幕”。" : "请在浏览器菜单中选择“安装应用”或“添加到主屏幕”。");
+  });
+}
+
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
 function speakingTarget() {
@@ -567,6 +609,8 @@ function setupEvents() {
 }
 
 setupEvents();
+setupInstall();
+registerServiceWorker();
 ensureDailyPlan();
 updateProfileUI();
 updatePlanUI();
