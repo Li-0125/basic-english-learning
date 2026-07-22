@@ -39,6 +39,10 @@ const everydayWords = [
   ["practice", "ˈpræktɪs", "v. 练习", "Practice makes progress.", "练习带来进步。"]
 ].map(([word, phonetic, meaning, example, translation]) => ({ word, phonetic, meaning, example, translation, source: "日常高频", group: "daily" }));
 
+const exampleOverrides = {
+  brook: { example: "A small brook runs through the village.", translation: "一条小溪流经这个村庄。" }
+};
+
 const sentenceLevels = [
   { english: "Hello, my name is Lily.", chinese: "你好，我叫 Lily。", level: "启蒙主题 · 自我介绍", audience: "beginner" },
   { english: "I am a student from China.", chinese: "我是一名来自中国的学生。", level: "启蒙主题 · 身份信息", audience: "beginner" },
@@ -51,15 +55,25 @@ const sentenceLevels = [
   { english: "Learning a language takes time, reflection, and regular practice.", chinese: "学习一门语言需要时间、反思和规律练习。", level: "高中课标主题 · 学习策略", audience: "highschool" }
 ];
 
+const fallbackPhraseExercises = [
+  { phrase: "as a result of", answer: "result", meaning: "作为……的结果" },
+  { phrase: "according to", answer: "according", meaning: "根据；按照" },
+  { phrase: "in addition to", answer: "addition", meaning: "除……之外" },
+  { phrase: "be familiar with", answer: "familiar", meaning: "熟悉" },
+  { phrase: "take into account", answer: "account", meaning: "把……考虑进去" }
+];
+
 let state = loadState();
 let library = [...everydayWords];
 let wordFilter = "all";
 let visibleWords = 20;
 let activeSession = null;
+let activePhraseSession = null;
 let mediaRecorder = null;
 let mediaStream = null;
 let recordingChunks = [];
 let installPrompt = null;
+let studyAdvanceTimer = null;
 
 function loadState() {
   try {
@@ -117,9 +131,18 @@ function formatStudyTime(hours) {
   return hours < 1 ? `${Math.round(hours * 60)} 分钟` : `${Number.isInteger(hours) ? hours : hours.toFixed(1)} 小时`;
 }
 
+function greetingByHour(date = new Date()) {
+  const hour = date.getHours();
+  if (hour < 12) return "早上好";
+  if (hour < 18) return "下午好";
+  return "晚上好";
+}
+
 function currentWordPool() {
   const gaokaoWords = library.filter((entry) => entry.group === "gaokao");
+  const cetWords = library.filter((entry) => entry.group.startsWith("cet"));
   if (state.profile.level === "highschool") return gaokaoWords.length ? gaokaoWords : library;
+  if (state.profile.level === "college") return cetWords.length ? cetWords : library;
   // Start with hand-curated daily words, then introduce shorter high-frequency-looking entries before longer ones.
   return [...everydayWords, ...gaokaoWords.sort((left, right) => left.word.length - right.word.length || left.word.localeCompare(right.word))];
 }
@@ -196,13 +219,15 @@ function updatePlanUI() {
   document.querySelector("#speakingToggle").checked = speaking;
   document.querySelector("#reviewToggle").checked = review;
   document.querySelector("#planSummary").textContent = [formatStudyTime(hours), `${vocabulary} 个词`, speaking ? "口语练习" : "词汇巩固"].join(" · ");
+  document.querySelector("#vocabularyTaskMeta").textContent = `今日计划 · ${vocabulary} 个新词`;
   document.querySelector("#planPreviewTitle").textContent = `${formatStudyTime(hours)}学习计划`;
-  const activities = [`${vocabulary} 个新词`, "一个基础句型"];
+  const activities = [`${vocabulary} 个新词`, "一次词组填空"];
   if (speaking) activities.push("一次短句跟读");
   if (review) activities.push(isReviewDue() ? "到期复习" : "复习预习");
   document.querySelector("#planPreviewText").textContent = `${activities.join("、")}。`;
-  document.querySelector("#heroWordCopy").textContent = `计划学习 ${vocabulary} 个${state.profile.level === "highschool" ? "高考" : "基础"}词汇；每 10 个词一组，随机出现三次，答对才会计入掌握。`;
-  document.querySelector("#wordCourseTitle").textContent = state.profile.level === "highschool" ? "高考 3500 词 · 今日背词" : "基础高频词 · 今日背词";
+  const courseLabel = state.profile.level === "highschool" ? "高考" : state.profile.level === "college" ? "四六级" : "基础";
+  document.querySelector("#heroWordCopy").textContent = `计划学习 ${vocabulary} 个${courseLabel}词汇；每 10 个词一组，随机出现三次，答对才会计入掌握。`;
+  document.querySelector("#wordCourseTitle").textContent = state.profile.level === "highschool" ? "高考 3500 词 · 今日背词" : state.profile.level === "college" ? "四六级词汇 · 今日背词" : "基础高频词 · 今日背词";
   document.querySelector("#wordCourseDescription").textContent = `今天计划 ${vocabulary} 个新词，分为 ${Math.ceil(vocabulary / 10)} 组；每个词在组内乱序出现三次。`;
   document.querySelector("#wordCourseGoal").textContent = vocabulary;
   document.querySelector("#wordCourseGroups").textContent = Math.ceil(vocabulary / 10);
@@ -211,6 +236,7 @@ function updatePlanUI() {
 function updateProfileUI() {
   document.body.dataset.theme = state.theme;
   const firstCharacter = state.profile.id.trim().slice(0, 1).toUpperCase() || "L";
+  document.querySelector("#homeGreeting").textContent = `${greetingByHour()}，${state.profile.id || "学习者"}。`;
   ["#sidebarName", "#displayNameInput"].forEach((selector) => document.querySelector(selector).value !== undefined ? document.querySelector(selector).value = state.profile.id : document.querySelector(selector).textContent = state.profile.id);
   document.querySelector("#sidebarName").textContent = state.profile.id;
   document.querySelector("#profileLevel").value = state.profile.level;
@@ -252,6 +278,76 @@ function beginReviewStudy() {
   switchView("study");
 }
 
+function phraseExercises() {
+  const phraseEntries = library.filter((entry) => entry.group.endsWith("phrase"));
+  const source = phraseEntries.length ? phraseEntries : fallbackPhraseExercises;
+  return shuffle(source).map((entry) => {
+    if (entry.phrase) return entry;
+    const words = entry.word.trim().split(/\s+/);
+    const answerIndex = words.length > 2 ? 1 : words.length - 1;
+    return { phrase: entry.word, answer: words[answerIndex], meaning: entry.meaning };
+  });
+}
+
+function beginPhrasePractice() {
+  activePhraseSession = { items: phraseExercises(), index: 0, answered: false };
+  renderPhraseExercise();
+  switchView("phrase");
+}
+
+function renderPhraseExercise() {
+  if (!activePhraseSession?.items[activePhraseSession.index]) {
+    activePhraseSession = { items: phraseExercises(), index: 0, answered: false };
+  }
+  const item = activePhraseSession?.items[activePhraseSession.index];
+  if (!item) return finishPhrasePractice();
+  const words = item.phrase.split(/\s+/);
+  const answerIndex = words.findIndex((word) => word.toLowerCase() === item.answer.toLowerCase());
+  document.querySelector("#phraseProgress").textContent = `第 ${activePhraseSession.index + 1} 题`;
+  document.querySelector("#phraseMeaning").textContent = item.meaning;
+  document.querySelector("#phraseCloze").innerHTML = words.map((word, index) => index === answerIndex ? "<span>______</span>" : escapeHtml(word)).join(" ");
+  document.querySelector("#phraseAnswer").value = "";
+  document.querySelector("#phraseAnswer").disabled = false;
+  document.querySelector("#submitPhrase").hidden = false;
+  document.querySelector("#nextPhrase").hidden = true;
+  document.querySelector("#phraseFeedback").className = "phrase-feedback";
+  document.querySelector("#phraseFeedback").textContent = "输入答案后提交。";
+  window.setTimeout(() => document.querySelector("#phraseAnswer").focus(), 0);
+}
+
+function submitPhraseAnswer() {
+  const item = activePhraseSession?.items[activePhraseSession.index];
+  if (!item || activePhraseSession.answered) return;
+  const answer = document.querySelector("#phraseAnswer").value.trim().toLowerCase();
+  const feedback = document.querySelector("#phraseFeedback");
+  if (!answer) {
+    feedback.className = "phrase-feedback warning";
+    feedback.textContent = "请先输入一个英文单词。";
+    return;
+  }
+  activePhraseSession.answered = true;
+  document.querySelector("#phraseAnswer").disabled = true;
+  document.querySelector("#submitPhrase").hidden = true;
+  document.querySelector("#nextPhrase").hidden = false;
+  if (answer === item.answer.toLowerCase()) {
+    feedback.className = "phrase-feedback success";
+    feedback.textContent = "答对了。这个词组已经记住一次。";
+  } else {
+    feedback.className = "phrase-feedback error";
+    feedback.innerHTML = `还差一点，正确答案是 <strong>${escapeHtml(item.answer)}</strong>。`;
+  }
+}
+
+function finishPhrasePractice() {
+  activePhraseSession = null;
+  state.completedTasks = Array.from(new Set([...state.completedTasks, "phrase"]));
+  state.lessons += 1;
+  saveState();
+  updateProgress();
+  showToast("今日词组练习完成。");
+  switchView("home");
+}
+
 function prepareDailyGroup() {
   const batchStart = state.daily.groupIndex * 10;
   const group = state.daily.items.slice(batchStart, batchStart + 10);
@@ -268,7 +364,16 @@ function activeItem() {
   return activeSession.items.find((item) => item.id === itemId) || null;
 }
 
+function exampleSentence(item) {
+  return item.example || exampleOverrides[item.word]?.example || `The word “${item.word}” is used in this sentence.`;
+}
+
+function exampleTranslation(item) {
+  return item.translation || exampleOverrides[item.word]?.translation || `这个句子展示了“${item.word}”的实际用法。`;
+}
+
 function refreshStudy() {
+  window.clearTimeout(studyAdvanceTimer);
   const session = activeSession.type === "daily" ? state.daily : activeSession;
   if (session.cursor >= session.schedule.length) {
     if (activeSession.type === "daily") {
@@ -289,25 +394,29 @@ function refreshStudy() {
   document.querySelector("#studyProgressLabel").textContent = activeSession.type === "daily" ? `第 ${state.daily.groupIndex + 1} 组 · 乱序巩固` : "昨日复习";
   document.querySelector("#studyProgressText").textContent = `${batchCorrect} / ${batchRequired}`;
   document.querySelector("#studyProgressBar").style.width = `${(batchCorrect / batchRequired) * 100}%`;
-  document.querySelector("#studyModeButton").textContent = activeSession.mode === "en-zh" ? "英文选中文" : "中文选英文";
+  document.querySelector("#studyModeButton").textContent = activeSession.mode === "en-zh" ? "英译中" : "中译英";
   document.querySelector("#studyWord").textContent = item.word;
   document.querySelector("#studyPhonetic").textContent = `[${item.phonetic}]`;
   document.querySelector("#studyMeaning").textContent = item.meaning;
-  document.querySelector("#studyExample").textContent = item.example || `Vocabulary focus: “${item.word}”.`;
-  document.querySelector("#studyExampleTranslation").textContent = item.translation || "高考词条例句将随内容审核持续补充。";
+  document.querySelector("#studyExample").textContent = exampleSentence(item);
+  document.querySelector("#studyExampleTranslation").textContent = exampleTranslation(item);
+  document.querySelector("#studyExampleTranslation").hidden = true;
   document.querySelector("#studyRepeatCount").textContent = item.required - item.correct;
+  document.querySelector("#previousStudyQuestion").hidden = session.cursor <= 0;
   const isEnglishToChinese = activeSession.mode === "en-zh";
+  document.querySelector(".word-study-card").classList.toggle("zh-en", !isEnglishToChinese);
   document.querySelector("#studyMeaning").classList.toggle("study-answer-hidden", isEnglishToChinese);
-  document.querySelector("#studyExampleTranslation").classList.toggle("study-answer-hidden", isEnglishToChinese);
   document.querySelector("#studyWord").classList.toggle("study-answer-hidden", !isEnglishToChinese);
   document.querySelector("#studyPhoneticBlock").classList.toggle("study-answer-hidden", !isEnglishToChinese);
   document.querySelector("#studyExampleBlock").classList.toggle("study-answer-hidden", !isEnglishToChinese);
   const answers = buildOptions(item, activeSession.mode);
-  document.querySelector("#quizPrompt").textContent = activeSession.mode === "en-zh" ? `“${item.word}” 的意思是？` : `“${item.meaning}” 对应的英文是？`;
+  document.querySelector("#quizPrompt").hidden = !isEnglishToChinese;
+  document.querySelector("#quizPrompt").textContent = `“${item.word}” 的意思是？`;
   document.querySelector("#quizOptions").innerHTML = answers.map((answer, index) => `<button class="quiz-option" data-correct="${answer.correct}"><span class="option-letter">${"ABCD"[index]}</span><span>${escapeHtml(answer.label)}</span></button>`).join("");
   document.querySelector("#quizFeedback").className = "quiz-feedback";
   document.querySelector("#quizFeedback").textContent = "选择一个答案开始练习。";
   document.querySelectorAll(".quiz-option").forEach((button) => button.addEventListener("click", () => answerQuestion(button.dataset.correct === "true", button)));
+  if (isEnglishToChinese) speak(item.word);
 }
 
 function buildOptions(item, mode) {
@@ -326,9 +435,10 @@ function answerQuestion(isCorrect, selected) {
     feedback.textContent = "答对了，记住一次。继续巩固这个单词。";
   } else {
     selected.classList.add("incorrect");
-    document.querySelector(".quiz-option[data-correct='true']").classList.add("correct");
+    const correctOption = document.querySelector(".quiz-option[data-correct='true']");
+    if (correctOption) correctOption.classList.add("correct", "revealed-answer");
     feedback.className = "quiz-feedback bad";
-    feedback.textContent = "这次不计入掌握次数。看一眼正确答案，再试一次。";
+    feedback.textContent = "选错了，绿框标出的是正确答案。";
     if (activeSession.type === "daily") state.daily.schedule.push(activeItem().id);
   }
   if (activeSession.type === "daily") {
@@ -338,7 +448,17 @@ function answerQuestion(isCorrect, selected) {
     activeSession.cursor += 1;
   }
   saveState();
-  window.setTimeout(refreshStudy, 850);
+  studyAdvanceTimer = window.setTimeout(refreshStudy, isCorrect ? 850 : 1800);
+}
+
+function previousStudyQuestion() {
+  if (!activeSession) return;
+  window.clearTimeout(studyAdvanceTimer);
+  const session = activeSession.type === "daily" ? state.daily : activeSession;
+  if (session.cursor <= 0) return;
+  session.cursor -= 1;
+  saveState();
+  refreshStudy();
 }
 
 function finishStudySession() {
@@ -385,13 +505,16 @@ async function loadWordbook() {
     const response = await fetch("data/gaokao-3500.json");
     if (!response.ok) throw new Error("词库加载失败");
     const gaokaoWords = await response.json();
+    const cetResponse = await fetch("data/cet-vocabulary.json");
+    if (!cetResponse.ok) throw new Error("四六级词库加载失败");
+    const cetWords = await cetResponse.json();
     const dailySet = new Set(everydayWords.map((entry) => entry.word));
-    library = [...everydayWords, ...gaokaoWords.filter((entry) => !dailySet.has(entry.word)).map((entry) => ({ ...entry, group: "gaokao", example: "", translation: "" }))];
+    library = [...everydayWords, ...gaokaoWords.filter((entry) => !dailySet.has(entry.word)).map((entry) => ({ ...entry, group: "gaokao", example: "", translation: "" })), ...cetWords];
     document.querySelector("#libraryCount").textContent = library.length.toLocaleString("zh-CN");
     document.querySelector("#wordbookStatus").textContent = "词库已加载。";
   } catch {
     document.querySelector("#libraryCount").textContent = everydayWords.length;
-    document.querySelector("#wordbookStatus").textContent = "高考词库暂未加载，当前显示日常高频词。请通过本地预览地址打开应用。";
+    document.querySelector("#wordbookStatus").textContent = "词库暂未完整加载，当前显示可用词条。请通过本地预览地址打开应用。";
   }
   if (state.profile.level === "highschool" && state.daily?.items?.some((item) => item.group !== "gaokao")) state.daily = null;
   ensureDailyPlan();
@@ -452,9 +575,10 @@ function speakingTarget() {
   if (state.speaking.mode === "word") {
     const candidates = state.daily?.items || currentWordPool();
     const word = candidates[state.speaking.wordIndex % candidates.length];
-    return { english: word.word, chinese: word.meaning, level: state.profile.level === "highschool" ? "高考 3500 词 · 美式发音" : "日常高频 · 美式发音" };
+    const level = state.profile.level === "highschool" ? "高考 3500 词" : state.profile.level === "college" ? "四六级词汇" : "日常高频";
+    return { english: word.word, chinese: word.meaning, level: `${level} · 美式发音` };
   }
-  const sentences = sentenceLevels.filter((sentence) => sentence.audience === state.profile.level);
+  const sentences = sentenceLevels.filter((sentence) => sentence.audience === state.profile.level || (state.profile.level === "college" && sentence.audience === "highschool"));
   return sentences[state.speaking.sentenceIndex % sentences.length];
 }
 
@@ -477,7 +601,7 @@ function setRecordingUI(recording) {
 
 async function toggleRecording() {
   if (mediaRecorder?.state === "recording") return mediaRecorder.stop();
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return showToast("当前浏览器不支持录音，请使用最新版 Chrome 或 Edge。" );
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return showToast("当前浏览器不支持录音，请使用支持 MediaRecorder 的安卓浏览器，并通过 HTTPS 打开。" );
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     recordingChunks = [];
@@ -525,7 +649,7 @@ function evaluateSpeech(transcript) {
 
 function startRecognition() {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Recognition) return setRecognitionMessage("当前浏览器不支持语音识别。你仍可使用录音回放练习；建议使用最新版 Chrome 或 Edge。", "warning");
+  if (!Recognition) return setRecognitionMessage("当前浏览器不支持语音识别。你仍可使用录音回放练习；自动评分需要浏览器支持 SpeechRecognition。", "warning");
   const recognition = new Recognition();
   recognition.lang = "en-US";
   recognition.interimResults = false;
@@ -579,10 +703,16 @@ function setupEvents() {
   document.querySelectorAll("[data-view]").forEach((item) => { if (!item.matches(".nav-item, .mobile-nav-item")) item.addEventListener("click", () => switchView(item.dataset.view)); });
   document.querySelector("#startLesson").addEventListener("click", beginDailyStudy);
   document.querySelector("#startWordCourse").addEventListener("click", beginDailyStudy);
-  document.querySelectorAll(".task-card").forEach((card) => card.addEventListener("click", () => { const task = card.dataset.task; if (task === "vocabulary") beginDailyStudy(); else if (task === "listening") switchView("speaking"); else if (task === "review") switchView("review"); else { state.completedTasks = Array.from(new Set([...state.completedTasks, task])); state.lessons += 1; saveState(); updateProgress(); } }));
+  document.querySelectorAll(".task-card").forEach((card) => card.addEventListener("click", () => { const task = card.dataset.task; if (task === "vocabulary") beginDailyStudy(); else if (task === "phrase") beginPhrasePractice(); else if (task === "listening") switchView("speaking"); else if (task === "review") switchView("review"); else { state.completedTasks = Array.from(new Set([...state.completedTasks, task])); state.lessons += 1; saveState(); updateProgress(); } }));
   document.querySelector("#exitStudy").addEventListener("click", () => { activeSession = null; switchView("home"); });
   document.querySelector("#studyPlay").addEventListener("click", () => speak(activeItem()?.word || ""));
+  document.querySelector("#previousStudyQuestion").addEventListener("click", previousStudyQuestion);
+  document.querySelector("#studyExampleBlock").addEventListener("click", () => { document.querySelector("#studyExampleTranslation").hidden = false; });
   document.querySelector("#studyModeButton").addEventListener("click", () => { activeSession.mode = activeSession.mode === "en-zh" ? "zh-en" : "en-zh"; refreshStudy(); });
+  document.querySelector("#exitPhrase").addEventListener("click", () => { activePhraseSession = null; switchView("home"); });
+  document.querySelector("#submitPhrase").addEventListener("click", submitPhraseAnswer);
+  document.querySelector("#nextPhrase").addEventListener("click", () => { activePhraseSession.index += 1; activePhraseSession.answered = false; renderPhraseExercise(); });
+  document.querySelector("#phraseAnswer").addEventListener("keydown", (event) => { if (event.key === "Enter") submitPhraseAnswer(); });
   document.querySelector("#reviewButton").addEventListener("click", beginReviewStudy);
   document.querySelector("#minutesInput").addEventListener("input", (event) => { state.plan.hours = Number(event.target.value); updatePlanUI(); });
   document.querySelectorAll(".stepper-button").forEach((button) => button.addEventListener("click", () => { state.plan.vocabulary = Math.min(300, Math.max(10, state.plan.vocabulary + Number(button.dataset.step))); updatePlanUI(); }));
@@ -603,7 +733,7 @@ function setupEvents() {
   document.querySelector("#saveProfile").addEventListener("click", () => { const id = document.querySelector("#displayNameInput").value.trim(); if (!id) return showToast("请先填写学习 ID。" ); state.profile.id = id; state.profile.level = document.querySelector("#profileLevel").value; state.daily = null; ensureDailyPlan(); saveState(); updateProfileUI(); updatePlanUI(); updateSpeakingUI(); showToast("个人资料和学习阶段已保存。" ); });
   document.querySelector("#avatarInput").addEventListener("change", (event) => { const [file] = event.target.files; if (!file) return; if (file.size > 1024 * 1024) return showToast("头像图片请控制在 1 MB 以内。" ); const reader = new FileReader(); reader.onload = () => { state.profile.avatar = reader.result; saveState(); updateProfileUI(); }; reader.readAsDataURL(file); });
   document.querySelectorAll(".level-option").forEach((button) => button.addEventListener("click", () => { state.profile.level = button.dataset.levelChoice; updateProfileUI(); }));
-  document.querySelector("#localLogin").addEventListener("click", () => { const identifier = document.querySelector("#loginIdentifier").value.trim(); const valid = /^1\d{10}$/.test(identifier) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier); if (!valid) return showToast("请输入有效的手机号或邮箱。" ); state.profile.identifier = identifier; if (state.profile.id === "学习者") state.profile.id = identifier.includes("@") ? identifier.split("@")[0] : `学习者${identifier.slice(-4)}`; state.daily = null; ensureDailyPlan(); saveState(); updateProfileUI(); updatePlanUI(); updateSpeakingUI(); document.querySelector("#accountDialog").close(); showToast(`${state.profile.level === "highschool" ? "高中" : "初学"}学习路径已创建。` ); });
+  document.querySelector("#localLogin").addEventListener("click", () => { const identifier = document.querySelector("#loginIdentifier").value.trim(); const valid = /^1\d{10}$/.test(identifier) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier); if (!valid) return showToast("请输入有效的手机号或邮箱。" ); state.profile.identifier = identifier; if (state.profile.id === "学习者") state.profile.id = identifier.includes("@") ? identifier.split("@")[0] : `学习者${identifier.slice(-4)}`; state.daily = null; ensureDailyPlan(); saveState(); updateProfileUI(); updatePlanUI(); updateSpeakingUI(); document.querySelector("#accountDialog").close(); showToast(`${state.profile.level === "highschool" ? "高中" : state.profile.level === "college" ? "大学生" : "初学"}学习路径已创建。` ); });
   document.querySelectorAll(".third-party-button").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.provider} 登录需要配置服务端应用凭证。`)));
   document.querySelectorAll(".theme-option").forEach((button) => button.addEventListener("click", () => { state.theme = button.dataset.themeChoice; saveState(); updateProfileUI(); }));
 }
